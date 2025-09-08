@@ -1,13 +1,13 @@
-// Canvas setup
 const canvas = document.getElementById("haloCanvas");
 const ctx = canvas.getContext("2d");
+
 let WIDTH = window.innerWidth;
 let HEIGHT = window.innerHeight;
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
 
 // Colors & wallpapers
-const WHITE="#FFFFFF", BLACK="#000000", BLUE="#0064FF", GRAY="#B4B4B4";
+const WHITE="#FFFFFF", BLACK="#000000", BLUE="#0064FF", GRAY="#B4B4B4", LIGHTGRAY="#F0F0F0";
 const wallpapers = [WHITE,"#C8FFC8","#C8C8FF","#FFC8C8","#FFFFC8"];
 let current_wallpaper = 0;
 
@@ -20,7 +20,7 @@ let typing_text="";
 
 // Keyboard letters
 const keyboard_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const extra_keys = ["SPACE","DEL"];
+const extra_keys = ["SPACE","DEL","SEND"];
 
 // Wheel
 const wheel_center = {x: WIDTH/2, y: HEIGHT-120};
@@ -31,7 +31,7 @@ let dragging=false, prev_angle=0;
 let keyboard_keys=[];
 
 // Market apps
-const availableApps = ["Calculator","Weather","Music","Photos","Camera","Notes"]; // sample apps
+const availableApps = ["Calculator","Weather","Music","Photos","Camera","Notes"];
 
 // Helper functions
 function drawTime(){
@@ -44,7 +44,7 @@ function drawBack(){
     ctx.moveTo(10,10); ctx.lineTo(30,0); ctx.lineTo(30,20); ctx.closePath(); ctx.fill();
 }
 
-// Wheel functions
+// Wheel
 function drawWheel(){
     ctx.strokeStyle=GRAY; ctx.lineWidth=30;
     ctx.beginPath(); ctx.arc(wheel_center.x,wheel_center.y,wheel_radius,0,Math.PI*2); ctx.stroke();
@@ -60,10 +60,14 @@ function wheelSelect(dir){
 // Menu
 function drawMenu(){
     ctx.fillStyle=wallpapers[current_wallpaper]; ctx.fillRect(0,0,WIDTH,HEIGHT);
-    ctx.fillStyle=BLUE; ctx.font="24px Arial"; ctx.fillText("HaloOS", WIDTH/2-60,50);
-    ctx.font="24px Arial";
+    ctx.fillStyle=BLUE; ctx.font="28px Arial Bold"; ctx.fillText("HaloOS", WIDTH/2-60,50);
+    ctx.font="22px Arial";
     let y=100;
-    apps.forEach((app,i)=>{ctx.fillStyle=(i===selected_index)?BLUE:BLACK;ctx.fillText(app, WIDTH/2-80,y); y+=50;});
+    apps.forEach((app,i)=>{
+        ctx.fillStyle=(i===selected_index)?BLUE:BLACK;
+        ctx.fillText(app, WIDTH/2-80,y);
+        y+=50;
+    });
     drawTime(); drawWheel();
 }
 
@@ -74,29 +78,30 @@ function drawKeyboard(ybase){
     keyboard_letters.forEach((ch,i)=>{
         const x=kx+(i%10)*32;
         const y=ky+Math.floor(i/10)*32;
-        ctx.fillStyle=GRAY; ctx.fillRect(x,y,30,30);
+        ctx.fillStyle=LIGHTGRAY; ctx.fillRect(x,y,30,30);
         ctx.fillStyle=BLACK; ctx.fillText(ch,x+5,y+20);
         keyboard_keys.push({x,y,w:30,h:30,ch});
     });
     extra_keys.forEach((key,i)=>{
         const x = kx + i*100;
         const y = ky + 3*32;
-        ctx.fillStyle=GRAY; ctx.fillRect(x,y,90,30);
-        ctx.fillStyle=BLACK; ctx.fillText(key, x+15, y+20);
+        ctx.fillStyle=BLUE; ctx.fillRect(x,y,90,30);
+        ctx.fillStyle=WHITE; ctx.fillText(key, x+15, y+20);
         keyboard_keys.push({x,y,w:90,h:30,ch:key});
     });
 }
 
-// NMessage / Notes
+// Typing box
 function drawTypingBox(){
     ctx.fillStyle=WHITE; 
     const boxHeight = 40;
-    const boxY = HEIGHT-180 - (keyboard_letters.length/10 + 1)*32; // above keyboard
+    const boxY = HEIGHT-180 - (keyboard_letters.length/10 + 1)*32 - 10; // above keyboard
     ctx.fillRect(20, boxY, WIDTH-40, boxHeight);
     ctx.fillStyle=BLACK; ctx.font="18px Arial";
     ctx.fillText(typing_text, 25, boxY+28);
 }
 
+// NMessage / Notes
 function drawNMessage(){
     ctx.fillStyle=wallpapers[current_wallpaper]; ctx.fillRect(0,0,WIDTH,HEIGHT);
     drawBack(); drawTime();
@@ -117,7 +122,7 @@ function drawNotes(){
     drawTypingBox();
 }
 
-// Clock, Calendar remain same
+// Clock & Calendar
 function drawClock(){ctx.fillStyle=wallpapers[current_wallpaper]; ctx.fillRect(0,0,WIDTH,HEIGHT); drawBack(); drawTime();
     ctx.fillStyle=BLACK; ctx.font="24px Arial"; ctx.fillText(new Date().toLocaleTimeString(), WIDTH/2-60, HEIGHT/2);
 }
@@ -139,7 +144,7 @@ function drawSettings(){
         y+=60;
     });
 
-    // Placeholder for other settings
+    // Other settings placeholders
     ctx.fillStyle=BLACK;
     ctx.fillText("Volume: Default", 40, y); y+=40;
     ctx.fillText("Theme: Light", 40, y); y+=40;
@@ -150,20 +155,23 @@ function drawSettings(){
 function drawMarket(){
     ctx.fillStyle=wallpapers[current_wallpaper]; ctx.fillRect(0,0,WIDTH,HEIGHT);
     drawBack(); drawTime();
-    ctx.fillStyle=BLACK; ctx.font="20px Arial"; ctx.fillText("Halo Market", WIDTH/2-60,50);
+    ctx.fillStyle=BLACK; ctx.font="22px Arial Bold"; ctx.fillText("Halo Market", WIDTH/2-70,50);
     let y=100;
     availableApps.forEach((app,i)=>{
-        ctx.fillStyle=BLUE; ctx.fillRect(40,y,150,30);
-        ctx.fillStyle=WHITE; ctx.fillText("Install", 50, y+20);
-        ctx.fillStyle=BLACK; ctx.fillText(app, 210, y+20);
-        y+=50;
+        ctx.fillStyle=BLUE; ctx.fillRect(40,y,WIDTH-80,40);
+        ctx.fillStyle=WHITE; ctx.fillText(app, 60, y+25);
+        ctx.fillStyle=LIGHTGRAY;
+        ctx.fillRect(WIDTH-120,y+5,70,30);
+        ctx.fillStyle=BLACK;
+        ctx.fillText("Install", WIDTH-110, y+25);
+        y+=60;
     });
 }
 
 // Main loop
 function mainLoop(){
     ctx.clearRect(0,0,WIDTH,HEIGHT);
-    if(current_app==="menu"){drawMenu(); selected_index=(selected_index+apps.length)%apps.length;}
+    if(current_app==="menu"){drawMenu();}
     else if(current_app==="NMessage") drawNMessage();
     else if(current_app==="Notes") drawNotes();
     else if(current_app==="Clock") drawClock();
@@ -174,7 +182,7 @@ function mainLoop(){
 }
 mainLoop();
 
-// Touch & Click Events
+// Touch & Click
 canvas.addEventListener("touchstart", handleTouch);
 canvas.addEventListener("touchmove", handleTouchMove);
 canvas.addEventListener("touchend", ()=>{dragging=false;});
@@ -196,6 +204,13 @@ function handleTouch(e){
             if(mx>k.x && mx<k.x+k.w && my>k.y && my<k.h+k.y){
                 if(k.ch==="SPACE") typing_text+=" ";
                 else if(k.ch==="DEL") typing_text=typing_text.slice(0,-1);
+                else if(k.ch==="SEND"){
+                    if(typing_text.trim()!==""){
+                        if(current_app==="NMessage") messages.push("You: "+typing_text);
+                        else if(current_app==="Notes") notes.push(typing_text);
+                    }
+                    typing_text="";
+                }
                 else typing_text+=k.ch;
             }
         });
