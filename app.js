@@ -16,7 +16,10 @@ let current_app="menu", selected_index=0;
 let messages = ["Alice: Hello!","Bob: Call me."];
 let notes = ["Welcome to HaloOS!"];
 let typing_text="";
-const keyboard_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".split("");
+
+// Keyboard letters + Space and Delete
+const keyboard_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const extra_keys = ["SPACE","DEL"];
 
 // Wheel
 const wheel_center = {x: WIDTH/2, y: HEIGHT-120};
@@ -70,6 +73,14 @@ function drawKeyboard(ybase){
         ctx.fillStyle=GRAY; ctx.fillRect(x,y,30,30);
         ctx.fillStyle=BLACK; ctx.fillText(ch,x+5,y+20);
         keyboard_keys.push({x,y,w:30,h:30,ch});
+    });
+    // Extra keys (Space, Delete)
+    extra_keys.forEach((key,i)=>{
+        const x = kx + i*100;
+        const y = ky + 3*32; // below letters
+        ctx.fillStyle=GRAY; ctx.fillRect(x,y,90,30);
+        ctx.fillStyle=BLACK; ctx.fillText(key, x+15, y+20);
+        keyboard_keys.push({x,y,w:90,h:30,ch:key});
     });
 }
 
@@ -138,6 +149,23 @@ canvas.addEventListener("touchstart",e=>{
     if(current_app==="menu"){
         if(dist<15){ const choice=apps[selected_index]; if(choice==="Power Off"){alert("Power Off");} else{current_app=choice;} }
         else if(dist>50 && dist<wheel_radius+15){ dragging=true; prev_angle=Math.atan2(dy,dx)*180/Math.PI; }
+    } else {
+        // check keyboard touch
+        keyboard_keys.forEach(k=>{
+            if(mx>k.x && mx<k.x+k.w && my>k.y && my<k.h+k.y){
+                if(k.ch==="SPACE") typing_text+=" ";
+                else if(k.ch==="DEL") typing_text=typing_text.slice(0,-1);
+                else typing_text+=k.ch;
+            }
+        });
+        // send/add button
+        if(mx>WIDTH-90 && mx<WIDTH-20 && my>HEIGHT-100 && my<HEIGHT-70){
+            if(typing_text.trim()!==""){
+                if(current_app==="NMessage") messages.push("You: "+typing_text);
+                else notes.push(typing_text);
+            }
+            typing_text="";
+        }
     }
 });
 canvas.addEventListener("touchmove",e=>{
@@ -148,21 +176,6 @@ canvas.addEventListener("touchmove",e=>{
     else if(prev_angle-angle>5){wheelSelect("counter"); prev_angle=angle;}
 });
 canvas.addEventListener("touchend",()=>{dragging=false;});
-
-// Click/keyboard for messages
-canvas.addEventListener("click",e=>{
-    const mx=e.clientX,my=e.clientY;
-    if(current_app==="NMessage" || current_app==="Notes"){
-        keyboard_keys.forEach(k=>{if(mx>k.x && mx<k.x+k.w && my>k.y && my<k.y+k.h){typing_text+=k.ch;}});
-        if(mx>WIDTH-90 && mx<WIDTH-20 && my>HEIGHT-100 && my<HEIGHT-70){
-            if(typing_text.trim()!==""){
-                if(current_app==="NMessage") messages.push("You: "+typing_text);
-                else notes.push(typing_text);
-            }
-            typing_text="";
-        }
-    }
-});
 
 // Resize
 window.addEventListener("resize",()=>{
