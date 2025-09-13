@@ -1,149 +1,225 @@
-@@ -6,10 +6,8 @@ let HEIGHT = window.innerHeight;
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
+import pygame, sys, time, math, calendar
 
-// Colors
-const WHITE="#FFFFFF", BLACK="#000000", BLUE="#0064FF", GRAY="#B4B4B4", LIGHTGRAY="#F0F0F0", DARKBLUE="#0050AA";
+pygame.init()
 
-// Wallpapers
-// Colors & wallpapers
-const WHITE="#FFFFFF", BLACK="#000000", BLUE="#0064FF", GRAY="#B4B4B4", LIGHTGRAY="#F0F0F0";
-const wallpapers = [WHITE,"#C8FFC8","#C8C8FF","#FFC8C8","#FFFFC8"];
-let current_wallpaper = 0;
+# ---------------- Screen ----------------
+WIDTH, HEIGHT = 360, 640
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("HaloOS 1.0")
+clock = pygame.time.Clock()
 
-@@ -20,7 +18,7 @@ let messages = ["Alice: Hello!","Bob: Call me."];
-let notes = ["Welcome to HaloOS!"];
-let typing_text="";
+# ---------------- Colors & Fonts ----------------
+WHITE, BLACK, BLUE, GRAY = (255,255,255),(0,0,0),(0,100,255),(180,180,180)
+font = pygame.font.SysFont("Arial", 24)
+small_font = pygame.font.SysFont("Arial", 18)
 
-// Keyboard
-// Keyboard letters
-const keyboard_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const extra_keys = ["SPACE","DEL","SEND"];
+# ---------------- Wallpapers ----------------
+wallpapers = [WHITE, (200,255,200), (200,200,255), (255,200,200), (255,255,200)]
+current_wallpaper = 0
 
-@@ -32,17 +30,15 @@ let dragging=false, prev_angle=0;
-// Keyboard keys
-let keyboard_keys=[];
+# ---------------- Apps ----------------
+apps = ["NMessage","Notes","Clock","Calendar","Settings","Power Off"]
+current_app = "menu"
+selected_index = 0
 
-// Halo Market
-let availableApps = ["Calculator","Weather","Music","Photos","Camera","Notes"];
-let installedApps = ["NMessage","Notes","Clock","Calendar","Settings","Halo Market","Power Off"];
-// Market apps
-const availableApps = ["Calculator","Weather","Music","Photos","Camera","Notes"];
+# ---------------- NMessage ----------------
+messages = ["Alice: Hello!","Bob: Call me."]
+typing_text = ""
+keyboard_letters = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ ")
+keyboard_keys = []
 
-// Helper functions
-function drawTime(){
-    const t = new Date();
-    ctx.fillStyle=BLACK; ctx.font="18px Arial";
-    ctx.fillText(t.toLocaleTimeString(), WIDTH-100, 30);
-}
+# ---------------- Notes ----------------
+notes = ["Welcome to HaloOS!"]
 
-function drawBack(){
-    ctx.fillStyle=GRAY; ctx.beginPath();
-    ctx.moveTo(10,10); ctx.lineTo(30,0); ctx.lineTo(30,20); ctx.closePath(); ctx.fill();
-@@ -56,31 +52,23 @@ function drawWheel(){
-    ctx.fillStyle=WHITE; ctx.beginPath(); ctx.arc(wheel_center.x,wheel_center.y,45,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=GRAY; ctx.beginPath(); ctx.arc(wheel_center.x,wheel_center.y,15,0,Math.PI*2); ctx.fill();
-}
+# ---------------- Helper Functions ----------------
+def draw_time():
+    t = time.strftime("%H:%M:%S")
+    screen.blit(small_font.render(t, True, BLACK), (WIDTH-100,10))
 
-function wheelSelect(dir){
-    if(dir==="clockwise") selected_index=(selected_index+1)%installedApps.length;
-    else if(dir==="counter") selected_index=(selected_index-1+installedApps.length)%installedApps.length;
-    if(dir==="clockwise") selected_index=(selected_index+1)%apps.length;
-    else if(dir==="counter") selected_index=(selected_index-1+apps.length)%apps.length;
-}
+def draw_back():
+    pygame.draw.polygon(screen, GRAY, [(10,10),(30,0),(30,20)])
 
-// Menu / Home screen
-// Menu
-function drawMenu(){
-    ctx.fillStyle=BLUE; ctx.fillRect(0,0,WIDTH,HEIGHT);
-    ctx.fillStyle=WHITE; ctx.fillRect(40,50,WIDTH-80,HEIGHT-200);
+# ---------------- Circle Wheel Navigation ----------------
+wheel_center = (WIDTH//2, HEIGHT-120)
+wheel_radius = 90
+dragging = False
+prev_angle = 0
 
-    ctx.fillStyle=BLACK; ctx.font="24px Arial Bold";
-    ctx.fillText("HaloOS", WIDTH/2-50, 80);
+def draw_wheel():
+    # Outer wheel
+    pygame.draw.circle(screen, GRAY, wheel_center, wheel_radius, 30)  
+    # Inner circle
+    pygame.draw.circle(screen, WHITE, wheel_center, 45)
+    # Center button
+    pygame.draw.circle(screen, GRAY, wheel_center, 15)  
 
-    let y=130;
-    installedApps.forEach((app,i)=>{
-        ctx.fillStyle=LIGHTGRAY;
-        ctx.fillRect(60,y,WIDTH-160,40);
-        ctx.fillStyle=BLACK;
-        ctx.fillText(app, 80, y+28);
-        y+=60;
-    ctx.fillStyle=wallpapers[current_wallpaper]; ctx.fillRect(0,0,WIDTH,HEIGHT);
-    ctx.fillStyle=BLUE; ctx.font="28px Arial Bold"; ctx.fillText("HaloOS", WIDTH/2-60,50);
-    ctx.font="22px Arial";
-    let y=100;
-    apps.forEach((app,i)=>{
-        ctx.fillStyle=(i===selected_index)?BLUE:BLACK;
-        ctx.fillText(app, WIDTH/2-80,y);
-        y+=50;
-    });
+def wheel_select(direction):
+    global selected_index
+    if direction == "clockwise":
+        selected_index = (selected_index + 1) % len(apps)
+    elif direction == "counter":
+        selected_index = (selected_index - 1) % len(apps)
 
-    drawTime();
-    drawWheel();
-    drawTime(); drawWheel();
-}
+def draw_menu():
+    screen.fill(wallpapers[current_wallpaper])
+    y=100
+    screen.blit(font.render("HaloOS", True, BLUE), (WIDTH//2 - 60, 40))
+    for i,item in enumerate(apps):
+        color = BLUE if i==selected_index else BLACK
+        screen.blit(font.render(item, True, color), (WIDTH//2 - 80, y))
+        y += 50
+    draw_time()
+    draw_wheel()
 
-// Keyboard
-@@ -170,19 +158,13 @@ function drawMarket(){
-    ctx.fillStyle=BLACK; ctx.font="22px Arial Bold"; ctx.fillText("Halo Market", WIDTH/2-70,50);
-    let y=100;
-    availableApps.forEach((app,i)=>{
-        ctx.fillStyle=BLUE; ctx.fillRect(40,y,WIDTH-80,50);
-        ctx.fillStyle=WHITE; ctx.fillText(app, 60, y+32);
+# ---------------- Keyboard ----------------
+def draw_keyboard(ybase):
+    global keyboard_keys
+    keyboard_keys=[]
+    kx, ky = 20, ybase
+    for i,ch in enumerate(keyboard_letters):
+        rect = pygame.Rect(kx+(i%10)*32, ky+(i//10)*32, 30,30)
+        pygame.draw.rect(screen,GRAY,rect)
+        screen.blit(small_font.render(ch,True,BLACK),(rect.x+5,rect.y+5))
+        keyboard_keys.append((rect,ch))
 
-        ctx.fillStyle=WHITE;
-        ctx.fillRect(WIDTH-150,y+10,100,30);
-        ctx.fillStyle=BLUE; ctx.fillRect(40,y,WIDTH-80,40);
-        ctx.fillStyle=WHITE; ctx.fillText(app, 60, y+25);
-        ctx.fillStyle=LIGHTGRAY;
-        ctx.fillRect(WIDTH-120,y+5,70,30);
-        ctx.fillStyle=BLACK;
-        ctx.font="16px Arial";
-        if(installedApps.includes(app)){
-            ctx.fillText("Delete", WIDTH-135, y+32);
-        } else {
-            ctx.fillText("Install", WIDTH-135, y+32);
-        }
-        y+=70;
-        ctx.fillText("Install", WIDTH-110, y+25);
-        y+=60;
-    });
-}
+# ---------------- NMessage App ----------------
+def draw_nmessage():
+    screen.fill(wallpapers[current_wallpaper])
+    draw_back(); draw_time()
+    y=50
+    for m in messages[-8:]:
+        screen.blit(small_font.render(m,True,BLACK),(20,y)); y+=25
+    # Textbox
+    pygame.draw.rect(screen,WHITE,(20,HEIGHT-100, WIDTH-120,30))
+    screen.blit(small_font.render(typing_text,True,BLACK),(25,HEIGHT-95))
+    # Send button
+    send_rect = pygame.Rect(WIDTH-90,HEIGHT-100,70,30)
+    pygame.draw.rect(screen,BLUE,send_rect)
+    screen.blit(small_font.render("Send",True,WHITE),(send_rect.x+5,send_rect.y+5))
+    draw_keyboard(HEIGHT-180)
+    return send_rect
 
-@@ -214,22 +196,10 @@ function handleTouch(e){
+# ---------------- Notes App ----------------
+def draw_notes():
+    screen.fill(wallpapers[current_wallpaper])
+    draw_back(); draw_time()
+    y=50
+    for n in notes[-8:]:
+        screen.blit(small_font.render(n,True,BLACK),(20,y)); y+=25
+    # Input box
+    pygame.draw.rect(screen,WHITE,(20,HEIGHT-100, WIDTH-120,30))
+    screen.blit(small_font.render(typing_text,True,BLACK),(25,HEIGHT-95))
+    # Add button
+    add_rect = pygame.Rect(WIDTH-90,HEIGHT-100,70,30)
+    pygame.draw.rect(screen,BLUE,add_rect)
+    screen.blit(small_font.render("Add",True,WHITE),(add_rect.x+10,add_rect.y+5))
+    draw_keyboard(HEIGHT-180)
+    return add_rect
 
-    const dx=mx-wheel_center.x; const dy=my-wheel_center.y; const dist=Math.sqrt(dx*dx+dy*dy);
-    if(current_app==="menu"){
-        if(dist<15){ const choice=installedApps[selected_index]; 
-            if(choice==="Power Off"){alert("Power Off");} else{current_app=choice;} 
-        } else if(dist>50 && dist<wheel_radius+15){ dragging=true; prev_angle=Math.atan2(dy,dx)*180/Math.PI; }
-    } else if(current_app==="Halo Market"){
-        let y=100;
-        availableApps.forEach((app,i)=>{
-            if(mx>WIDTH-150 && mx<WIDTH-50 && my>y+10 && my<y+40){
-                if(installedApps.includes(app)){
-                    installedApps = installedApps.filter(a=>a!==app);
-                } else {
-                    installedApps.push(app);
-                }
-            }
-            y+=70;
-        });
-        if(dist<15){ const choice=apps[selected_index]; if(choice==="Power Off"){alert("Power Off");} else{current_app=choice;} }
-        else if(dist>50 && dist<wheel_radius+15){ dragging=true; prev_angle=Math.atan2(dy,dx)*180/Math.PI; }
-    } else {
-        // keyboard tap
-        keyboard_keys.forEach(k=>{
-            if(mx>k.x && mx<k.x+k.w && my>k.y && my<k.h+k.y){
-                if(k.ch==="SPACE") typing_text+=" ";
-@@ -251,8 +221,8 @@ function handleTouchMove(e){
-    if(!dragging) return;
-    const touch=e.touches[0]; const mx=touch.clientX,my=touch.clientY;
-    const angle=Math.atan2(my-wheel_center.y,mx-wheel_center.x)*180/Math.PI;
-    if(angle-prev_angle>5){selected_index=(selected_index+1)%installedApps.length; prev_angle=angle;}
-    else if(prev_angle-angle>5){selected_index=(selected_index-1+installedApps.length); prev_angle=angle;}
-    if(angle-prev_angle>5){selected_index=(selected_index+1)%apps.length; prev_angle=angle;}
-    else if(prev_angle-angle>5){selected_index=(selected_index-1+apps.length)%apps.length; prev_angle=angle;}
-}
+# ---------------- Clock ----------------
+def draw_clock():
+    screen.fill(wallpapers[current_wallpaper])
+    draw_back(); draw_time()
+    screen.blit(font.render(time.strftime("%H:%M:%S"), True, BLACK), (WIDTH//2 - 60, HEIGHT//2))
 
-// Resize
+# ---------------- Calendar ----------------
+def draw_calendar():
+    screen.fill(wallpapers[current_wallpaper])
+    draw_back(); draw_time()
+    screen.blit(font.render(time.strftime("%B %Y"),True,BLACK),(WIDTH//2-80,40))
+    cal = calendar.monthcalendar(time.localtime().tm_year,time.localtime().tm_mon)
+    y=100
+    for week in cal:
+        x=40
+        for d in week:
+            text = str(d) if d>0 else " "
+            col = (200,0,0) if d==time.localtime().tm_mday else BLACK
+            screen.blit(small_font.render(text,True,col),(x,y))
+            x+=40
+        y+=30
+
+# ---------------- Settings ----------------
+def draw_settings():
+    screen.fill(wallpapers[current_wallpaper])
+    draw_back(); draw_time()
+    screen.blit(font.render("Wallpapers:",True,BLACK),(WIDTH//2-70,80))
+    y=130
+    for i,c in enumerate(wallpapers):
+        rect=pygame.Rect(WIDTH//2-50,y,100,40)
+        pygame.draw.rect(screen,c,rect)
+        if i==current_wallpaper: pygame.draw.rect(screen,BLACK,rect,2)
+        y+=60
+
+# ---------------- Main Loop ----------------
+running=True
+send_button=None
+while running:
+    screen.fill(wallpapers[current_wallpaper])
+
+    if current_app=="menu": draw_menu()
+    elif current_app=="NMessage": send_button=draw_nmessage()
+    elif current_app=="Notes": send_button=draw_notes()
+    elif current_app=="Clock": draw_clock()
+    elif current_app=="Calendar": draw_calendar()
+    elif current_app=="Settings": draw_settings()
+
+    for e in pygame.event.get():
+        if e.type==pygame.QUIT: running=False
+
+        elif e.type==pygame.KEYDOWN:
+            if current_app in ["NMessage","Notes"]:
+                if e.key==pygame.K_BACKSPACE: typing_text=typing_text[:-1]
+                elif e.key==pygame.K_RETURN:
+                    if typing_text.strip()!="":
+                        if current_app=="NMessage": messages.append("You: "+typing_text)
+                        else: notes.append(typing_text)
+                    typing_text=""
+                elif e.unicode.upper() in "ABCDEFGHIJKLMNOPQRSTUVWXYZ ":
+                    typing_text+=e.unicode.upper()
+
+        elif e.type==pygame.MOUSEBUTTONDOWN:
+            mx,my = pygame.mouse.get_pos()
+            # Back button
+            if 0<=mx<=30 and 0<=my<=20 and current_app!="menu":
+                current_app="menu"
+            # Settings
+            if current_app=="Settings":
+                y=130
+                for i,c in enumerate(wallpapers):
+                    if pygame.Rect(WIDTH//2-50,y,100,40).collidepoint(mx,my):
+                        current_wallpaper=i
+                    y+=60
+            # Keyboard
+            if current_app in ["NMessage","Notes"]:
+                for rect,ch in keyboard_keys:
+                    if rect.collidepoint(mx,my): typing_text+=ch
+                if send_button and send_button.collidepoint(mx,my):
+                    if typing_text.strip()!="":
+                        if current_app=="NMessage": messages.append("You: "+typing_text)
+                        else: notes.append(typing_text)
+                    typing_text=""
+
+            # Circle wheel input
+            if current_app=="menu":
+                dx,dy = mx-wheel_center[0], my-wheel_center[1]
+                dist = math.sqrt(dx*dx+dy*dy)
+                if dist < 15:  # center button
+                    choice=apps[selected_index]
+                    if choice=="Power Off": running=False
+                    else: current_app=choice
+                elif 50<dist<wheel_radius+15:
+                    dragging=True
+                    prev_angle=math.degrees(math.atan2(dy,dx))
+
+        elif e.type==pygame.MOUSEBUTTONUP: dragging=False
+
+        elif e.type==pygame.MOUSEMOTION and dragging and current_app=="menu":
+            mx,my = pygame.mouse.get_pos()
+            dx,dy = mx-wheel_center[0], my-wheel_center[1]
+            angle=math.degrees(math.atan2(dy,dx))
+            if angle-prev_angle>10: wheel_select("clockwise"); prev_angle=angle
+            elif prev_angle-angle>10: wheel_select("counter"); prev_angle=angle
+
+    pygame.display.flip(); clock.tick(30)
+
+pygame.quit(); sys.exit()
